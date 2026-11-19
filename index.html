@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>抖音续火花 · 看板</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; padding: 22px 16px 40px;
+    background: radial-gradient(120% 80% at 50% 0%, #1b1f2a 0%, #12141a 55%, #0d0f13 100%);
+    color: #e8ebf2;
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; }
+  header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .logo {
+    width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center;
+    background: linear-gradient(140deg, #ff5b73, #ff9f45); font-size: 20px;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: .5px; }
+  .sub { font-size: 12px; color: #8b93a6; margin-top: 2px; }
+
+  .card {
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 18px; padding: 20px; margin-bottom: 14px;
+    backdrop-filter: blur(8px);
+  }
+  .card-label { font-size: 12px; color: #8b93a6; letter-spacing: 1px; }
+  .big { font-size: 40px; font-weight: 700; margin: 8px 0 2px; line-height: 1.1; }
+  .big small { font-size: 15px; font-weight: 400; color: #8b93a6; margin-left: 6px; }
+  .state { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 5px 12px;
+    border-radius: 999px; margin-top: 10px; }
+  .state.ok { background: rgba(56,200,120,.15); color: #4bdd94; }
+  .state.bad { background: rgba(255,92,110,.15); color: #ff7b8a; }
+  .state.idle { background: rgba(140,150,170,.15); color: #a2abc0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mini { background: rgba(255,255,255,.04); border-radius: 14px; padding: 14px; }
+  .mini .v { font-size: 22px; font-weight: 600; margin-top: 4px; }
+  .mini .k { font-size: 12px; color: #8b93a6; }
+  .rows { margin-top: 6px; }
+  .row { display: flex; justify-content: space-between; padding: 11px 0;
+    border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; }
+  .row:last-child { border-bottom: none; }
+  .row .d { color: #aeb6c8; }
+  .row .s { font-variant-numeric: tabular-nums; }
+  .ok-t { color: #4bdd94; }
+  .bad-t { color: #ff7b8a; }
+  .foot { text-align: center; font-size: 11px; color: #5f6779; margin-top: 18px; line-height: 1.7; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🔥</div>
+    <div>
+      <h1>抖音续火花 · 看板</h1>
+      <div class="sub" id="updated">加载中…</div>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="card-label">今日已续</div>
+    <div class="big"><span id="ok">—</span><small>/ <span id="total">—</span> 位</small></div>
+    <div id="state" class="state idle"><span class="dot"></span><span id="stateText">等待数据</span></div>
+  </div>
+
+  <div class="grid">
+    <div class="mini"><div class="k">还差几位</div><div class="v" id="left">—</div></div>
+    <div class="mini"><div class="k">发出消息</div><div class="v" id="msgs">—</div></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="card-label">最近 7 天</div>
+    <div class="rows" id="history"><div class="row"><span class="d">暂无记录</span></div></div>
+  </div>
+
+  <div class="foot">
+    数据由本机每日 08:30 自动发送后同步<br>
+    <span id="sync">—</span>
+  </div>
+</div>
+
+<script>
+function el(id){ return document.getElementById(id); }
+function fmt(t){
+  if(!t) return "—";
+  const d = new Date(t);
+  if (isNaN(d)) return t;
+  const p = n => String(n).padStart(2,"0");
+  return `${d.getMonth()+1}月${d.getDate()}日 ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+async function load(){
+  try{
+    const res = await fetch("status.json?t=" + Date.now(), {cache:"no-store"});
+    const data = await res.json();
+    const today = data.today || {};
+    el("ok").textContent = today.success ?? "—";
+    el("total").textContent = today.total ?? "—";
+    el("left").textContent = today.failed ?? "—";
+    el("msgs").textContent = today.messages ?? "—";
+    el("updated").textContent = "更新于 " + fmt(data.updated);
+
+    const st = el("state");
+    if (today.status === "ok"){
+      st.className = "state ok";
+      el("stateText").textContent = today.failed ? `有 ${today.failed} 位没续上` : "全部续上了";
+    } else if (today.status === "error"){
+      st.className = "state bad";
+      el("stateText").textContent = "今天发送失败";
+    } else {
+      st.className = "state idle";
+      el("stateText").textContent = "今天还没跑";
+    }
+
+    const list = (data.history || []).slice(0,7);
+    if (list.length){
+      el("history").innerHTML = list.map(r => {
+        const cls = r.failed ? "bad-t" : "ok-t";
+        return `<div class="row"><span class="d">${r.date}</span><span class="s ${cls}">${r.success}/${r.total}</span></div>`;
+      }).join("");
+    }
+    el("sync").textContent = "最近同步：" + fmt(data.updated);
+  }catch(e){
+    el("state").className = "state bad";
+    el("stateText").textContent = "数据读取失败";
+  }
+}
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
