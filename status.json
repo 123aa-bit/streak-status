@@ -1,19 +1,19 @@
 {
-  "updated": "2026-11-26T15:38:18+08:00",
+  "updated": "2026-11-26T15:48:01+08:00",
   "today": {
     "date": "2026-11-26",
-    "total": 1,
-    "success": 0,
-    "failed": 1,
-    "messages": 0,
-    "status": "error"
+    "total": 25,
+    "success": 25,
+    "failed": 0,
+    "messages": 25,
+    "status": "ok"
   },
   "history": [
     {
       "date": "2026-11-26",
-      "total": 1,
-      "success": 0,
-      "failed": 1
+      "total": 25,
+      "success": 25,
+      "failed": 0
     },
     {
       "date": "2026-11-25",
